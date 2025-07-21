@@ -1,5 +1,6 @@
 'use client'
 
+import companyEditsSchema from '@/app/(dashboard)/(home)/accounts-corporate-sme/(Personnel)/[id]/(company profile)/company-edits-schema'
 import CompanyAccountInformation from '@/app/(dashboard)/(home)/accounts-corporate-sme/(Personnel)/[id]/(company profile)/company-account-information'
 import CompanyCancelButton from '@/app/(dashboard)/(home)/accounts-corporate-sme/(Personnel)/[id]/(company profile)/company-cancel-button'
 import CompanyContractInformation from '@/app/(dashboard)/(home)/accounts-corporate-sme/(Personnel)/[id]/(company profile)/company-contract-information'
@@ -78,8 +79,9 @@ const CompanyAbout: FC<Props> = ({ companyId }) => {
     () => account?.additional_benefits_files ?? [],
     [account?.additional_benefits_files],
   )
-
-  const [initialAffiliates, setInitialAffiliates] = useState([])
+  const [initialAffiliates, setInitialAffiliates] = useState<
+    { id: string; affiliate_name: string; affiliate_address: string }[]
+  >([])
 
   useEffect(() => {
     const fetchAffiliates = async () => {
@@ -345,6 +347,19 @@ const CompanyAbout: FC<Props> = ({ companyId }) => {
               console.log('🗑️ Soft-deleted affiliate ID:', id)
             }
           }
+        }
+
+        // ✅ Re-fetch updated active affiliates
+        const { data: updatedAffiliates, error: fetchError } = await supabase
+          .from('company_affiliates')
+          .select('id, affiliate_name, affiliate_address')
+          .eq('parent_company_id', companyId)
+          .eq('is_active', true)
+
+        if (fetchError) {
+          console.error('❌ Error refetching updated affiliates:', fetchError)
+        } else {
+          setInitialAffiliates(updatedAffiliates || [])
         }
 
         // Handle file input

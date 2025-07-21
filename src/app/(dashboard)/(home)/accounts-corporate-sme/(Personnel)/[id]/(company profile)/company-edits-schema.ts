@@ -14,9 +14,10 @@ const companyEditsSchema = z.object({
   affiliate_entries: z
     .array(
       z.object({
+        id: z.string().optional(), // ✅ Include this
         affiliate_name: z.string(),
         affiliate_address: z.string(),
-      })
+      }),
     )
     .optional(),
 

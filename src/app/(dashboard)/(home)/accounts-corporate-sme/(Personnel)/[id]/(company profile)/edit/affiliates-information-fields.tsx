@@ -12,9 +12,10 @@ import { Button } from '@/components/ui/button'
 import { Plus, Trash2 } from 'lucide-react'
 import { useFormContext, useFieldArray } from 'react-hook-form'
 import { z } from 'zod'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { createBrowserClient } from '@/utils/supabase-client'
 
-const AffiliatesInformationFields = () => {
+const AffiliatesInformationFields = ({ companyId }: { companyId: string }) => {
   const form = useFormContext<z.infer<typeof companyEditsSchema>>()
 
   const { fields, append, remove } = useFieldArray({
@@ -24,11 +25,11 @@ const AffiliatesInformationFields = () => {
 
   const [newAffiliateName, setNewAffiliateName] = useState('')
   const [newAffiliateAddress, setNewAffiliateAddress] = useState('')
+  const supabase = createBrowserClient()
 
   const handleAddAffiliate = () => {
     const trimmedName = newAffiliateName.trim()
     const trimmedAddress = newAffiliateAddress.trim()
-
     if (!trimmedName || !trimmedAddress) return
 
     append({
@@ -41,17 +42,25 @@ const AffiliatesInformationFields = () => {
   }
 
   const handleRemoveAffiliate = (index: number) => {
-    const entry = fields[index]
+    const currentEntries = form.getValues('affiliate_entries') || []
+
+    const entry = currentEntries[index]
+
     if (entry?.id) {
-      const currentDeletedIds = form.getValues('deleted_affiliate_ids') || []
-      form.setValue('deleted_affiliate_ids', [...currentDeletedIds, entry.id])
+      const deletedIds = form.getValues('deleted_affiliate_ids') || []
+      if (!deletedIds.includes(entry.id)) {
+        form.setValue('deleted_affiliate_ids', [...deletedIds, entry.id])
+      }
     }
+
     remove(index)
   }
 
   return (
     <div className="space-y-4">
-      {/* Add Affiliate Inputs */}
+      <h3 className="text-lg font-semibold">Affiliates Information</h3>
+
+      {/* Add Affiliate Form */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <Input
           className="w-full sm:max-w-xs"
@@ -76,14 +85,14 @@ const AffiliatesInformationFields = () => {
         </Button>
       </div>
 
-      {/* List of Affiliates */}
+      {/* Existing Affiliates */}
       <div className="space-y-2">
         {fields.map((field, index) => (
           <div
             key={field.id}
-            className="flex flex-col sm:flex-row items-start sm:items-center justify-between rounded-md bg-gray-50 p-4 border"
+            className="flex flex-col items-start justify-between rounded-md border bg-gray-50 p-4 sm:flex-row sm:items-center"
           >
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full">
+            <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center">
               <div className="flex-1">
                 <FormField
                   control={form.control}
@@ -91,7 +100,11 @@ const AffiliatesInformationFields = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <Input {...field} placeholder="Affiliate Name" className="w-full" />
+                        <Input
+                          {...field}
+                          placeholder="Affiliate Name"
+                          className="w-full"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -105,7 +118,11 @@ const AffiliatesInformationFields = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <Input {...field} placeholder="Affiliate Address" className="w-full" />
+                        <Input
+                          {...field}
+                          placeholder="Affiliate Address"
+                          className="w-full"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
